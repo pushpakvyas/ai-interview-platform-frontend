@@ -8,7 +8,6 @@ import ProtectedRoute from "./components/common/ProtectedRoute.jsx";
 import PageLoader from "./components/common/PageLoader.jsx";
 
 import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
 
 import CandidateDashboard from "./pages/candidate/CandidateDashboard.jsx";
 import WelcomeScreen from "./pages/candidate/WelcomeScreen.jsx";
@@ -24,7 +23,7 @@ import ScheduleInterview from "./pages/admin/ScheduleInterview.jsx";
 import TechnologyTemplates from "./pages/admin/TechnologyTemplates.jsx";
 import InterviewReport from "./pages/admin/InterviewReport.jsx";
 
-const PUBLIC_PATHS = ["/login", "/register"];
+const PUBLIC_PATHS = ["/login"];
 
 export default function App() {
   const dispatch = useDispatch();
@@ -58,7 +57,6 @@ export default function App() {
       <main className="app-main">
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
 
           {/* Candidate routes */}
           <Route path="/candidate" element={<ProtectedRoute allowedRoles={["CANDIDATE"]}><CandidateDashboard /></ProtectedRoute>} />

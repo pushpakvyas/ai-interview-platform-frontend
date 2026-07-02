@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { loginRequest } from "../store/slices/authSlice.js";
 import { sha256Hex } from "../utils/hash.js";
 import Spinner from "../components/common/Spinner.jsx";
@@ -43,7 +43,7 @@ export default function Login() {
         <button type="submit" className="btn btn-primary" disabled={status === "loading"}>
           {status === "loading" ? <span className="btn-spinner"><Spinner size={14} /> Signing in…</span> : "Sign in →"}
         </button>
-        <p className="auth-footer">No account? <Link to="/register">Register as candidate</Link></p>
+        <p className="auth-footer">Don't have an account? Ask your admin to create one for you.</p>
       </form>
     </div>
   );

@@ -12,12 +12,25 @@ export default function Navbar() {
     navigate("/login");
   };
 
+  const initials = user ? `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() : "";
+
   return (
     <nav className="navbar">
-      <Link to="/" className="navbar-brand">AI Interview Platform</Link>
+      <Link to="/" className="navbar-brand">
+        <span className="wave-mark" aria-hidden="true">
+          <span className="wave-bar" /><span className="wave-bar" /><span className="wave-bar" /><span className="wave-bar" />
+        </span>
+        AI Interview Platform
+      </Link>
       {user && (
         <div className="navbar-right">
-          <span>{user.firstName} {user.lastName} · <span style={{color:"var(--indigo)"}}>{user.roleType}</span></span>
+          <div className="navbar-user">
+            <span className="navbar-avatar">{initials}</span>
+            <span className="navbar-user-text">
+              {user.firstName} {user.lastName}
+              <span className="navbar-role">{user.roleType}</span>
+            </span>
+          </div>
           <button onClick={handleLogout}>Sign out</button>
         </div>
       )}

@@ -42,6 +42,7 @@ export default function LiveInterview() {
   const synthRef = useRef(window.speechSynthesis);
   const timerRef = useRef(null);
   const silenceRef = useRef(null);
+  const noSpeechRef = useRef(null);
   const finalRef = useRef("");
   const isListeningRef = useRef(false);
   const logRef = useRef("");
@@ -49,6 +50,8 @@ export default function LiveInterview() {
   const questionIdRef = useRef(null);
   const voicesRef = useRef([]);
   const timeLeftRef = useRef(1800);
+  const turnIdRef = useRef(0);
+  const startListeningRef = useRef(() => {});
 
   useEffect(() => {
     const load = () => { voicesRef.current = window.speechSynthesis.getVoices(); };
@@ -62,8 +65,8 @@ export default function LiveInterview() {
 
   useEffect(() => { timeLeftRef.current = timeLeft; }, [timeLeft]);
 
-  const addLine = useCallback((speaker, text) => {
-    setTranscript(p => [...p, { speaker, text }]);
+  const addLine = useCallback((speaker, text, questionId) => {
+    setTranscript(p => [...p, { speaker, text, questionId }]);
     logRef.current += `${speaker === "AI" ? "Interviewer" : "Candidate"}: ${text}\n`;
   }, []);
 
@@ -82,7 +85,13 @@ export default function LiveInterview() {
       || voicesRef.current[0];
     if (v) u.voice = v;
     u.onstart = () => { setIsAiSpeaking(true); setAiLabel("Speaking…"); setStatusState("speaking"); setStatusMsg("AI Interviewer is speaking…"); };
-    u.onend = () => { setIsAiSpeaking(false); setAiLabel("Listening"); setStatusState("listening"); setStatusMsg('Your turn — click "Speak Answer"'); };
+    u.onend = () => {
+      setIsAiSpeaking(false); setAiLabel("Listening"); setStatusState("listening");
+      // Realistic turn-taking: the candidate's turn starts automatically as
+      // soon as the AI stops talking — no manual button press needed. The
+      // "Speak Answer" button remains as a manual fallback/restart control.
+      startListeningRef.current();
+    };
     synthRef.current.speak(u);
   }, []);
 
@@ -149,15 +158,57 @@ export default function LiveInterview() {
     clearTimeout(silenceRef.current);
     silenceRef.current = setTimeout(() => {
       if (recognitionRef.current && isListeningRef.current) recognitionRef.current.stop();
-    }, 3000);
+    }, 2000);
   }, []);
 
   const startListening = useCallback(() => {
-    if (!recognitionRef.current || sessionEnded) return;
-    finalRef.current = ""; isListeningRef.current = true;
-    setIsMicActive(true); setStatusMsg("Listening… (3s silence = send)"); setStatusState("listening");
-    recognitionRef.current.start();
-  }, [sessionEnded]);
+  if (!recognitionRef.current || sessionEnded || isListeningRef.current) return;
+  finalRef.current = ""; isListeningRef.current = true;
+  setIsMicActive(true); setStatusMsg("Listening… (2s silence = send)"); setStatusState("listening");
+  recognitionRef.current.start();
+  clearTimeout(silenceRef.current);
+  clearTimeout(noSpeechRef.current);
+  // Grace period to let the candidate collect their thoughts before
+  // saying anything — the 2s "send on silence" timer only starts once
+  // speech is actually detected (see rec.onresult). This timeout is just
+  // a safety net so the mic doesn't stay open forever if nobody speaks.
+  noSpeechRef.current = setTimeout(() => {
+    if (recognitionRef.current && isListeningRef.current) recognitionRef.current.stop();
+  }, 8000);
+}, [sessionEnded]);
+
+  useEffect(() => { startListeningRef.current = startListening; }, [startListening]);
+
+  // Lets the candidate redo their answer to the most recent AI question —
+  // e.g. if they feel their last answer wasn't good. Clicking that line:
+  //  1. stops whatever's currently happening (TTS / listening),
+  //  2. discards anything said/asked after that question (so the AI
+  //     doesn't end up responding to two different answers to the same
+  //     question), and
+  //  3. reopens the mic for a fresh answer to that exact question.
+  const redoLatestQuestion = useCallback(() => {
+    if (!sessionStarted || sessionEnded) return;
+    let idx = -1;
+    for (let i = transcript.length - 1; i >= 0; i--) {
+      if (transcript[i].speaker === "AI") { idx = i; break; }
+    }
+    if (idx === -1) return;
+
+    turnIdRef.current++; // invalidate any in-flight AI response for the old answer
+    synthRef.current.cancel();
+    clearTimeout(silenceRef.current);
+    clearTimeout(noSpeechRef.current);
+    finalRef.current = ""; // prevent the imminent recognition.stop() below from auto-submitting stale text
+    if (isListeningRef.current) recognitionRef.current?.stop();
+
+    setTranscript(t => t.slice(0, idx + 1));
+    historyRef.current = historyRef.current.slice(0, idx + 1);
+    questionIdRef.current = transcript[idx].questionId ?? questionIdRef.current;
+    setIsAiSpeaking(false);
+    setStatusMsg("Answer again — listening…");
+    setStatusState("listening");
+    setTimeout(() => startListening(), 150);
+  }, [transcript, sessionStarted, sessionEnded, startListening]);
 
   const startInterview = useCallback(async () => {
     setSessionStarted(true); setStatusMsg("Accessing camera & microphone…"); setStatusState("connecting");
@@ -181,13 +232,16 @@ export default function LiveInterview() {
       recognitionRef.current = rec;
 
       rec.onresult = (e) => {
-        let interim = ""; finalRef.current = "";
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          if (e.results[i].isFinal) finalRef.current = e.results[i][0].transcript.trim();
-          else interim = e.results[i][0].transcript;
-        }
-        if (interim || finalRef.current) resetSilence();
-      };
+  let interim = ""; finalRef.current = "";
+  for (let i = e.resultIndex; i < e.results.length; i++) {
+    if (e.results[i].isFinal) finalRef.current = e.results[i][0].transcript.trim();
+    else interim = e.results[i][0].transcript;
+  }
+  if (interim || finalRef.current) {
+    clearTimeout(noSpeechRef.current);
+    resetSilence();
+  }
+};
 
       rec.onend = async () => {
         isListeningRef.current = false; setIsMicActive(false);
@@ -196,6 +250,7 @@ export default function LiveInterview() {
           addLine("You", txt);
           historyRef.current.push({ role: "user", text: txt });
           setStatusMsg("AI is thinking…"); setStatusState("connecting");
+          const myTurn = ++turnIdRef.current;
           try {
             const { data } = await apiClient.post(`/interviews/${interviewId}/message`, {
               message: txt,
@@ -203,12 +258,14 @@ export default function LiveInterview() {
               timeLeftSeconds: timeLeftRef.current,
               questionId: questionIdRef.current,
             });
+            if (myTurn !== turnIdRef.current) return; // superseded by a redo/newer turn
             const aiText = stripMarkdown(data.response || "Could you please repeat?");
             questionIdRef.current = data.questionId;
-            addLine("AI", aiText);
+            addLine("AI", aiText, data.questionId);
             historyRef.current.push({ role: "model", text: aiText });
             setTimeout(() => speak(aiText), 150);
           } catch(e) {
+            if (myTurn !== turnIdRef.current) return;
             const fb = "Could you please repeat your answer?";
             addLine("AI", fb); speak(fb);
           }
@@ -220,7 +277,7 @@ export default function LiveInterview() {
       const { data } = await apiClient.post(`/interviews/${interviewId}/start`);
       const greeting = stripMarkdown(data.greeting || "Hello! Let's begin your interview.");
       questionIdRef.current = data.questionId;
-      addLine("AI", greeting);
+      addLine("AI", greeting, data.questionId);
       historyRef.current.push({ role: "model", text: greeting });
       speak(greeting);
       setTimeLeft(data.interview.duration * 60);
@@ -232,7 +289,7 @@ export default function LiveInterview() {
     }
   }, [addLine, speak, resetSilence, startTimer, interviewId]);
 
-  useEffect(() => () => { clearInterval(timerRef.current); recognitionRef.current?.stop(); synthRef.current.cancel(); stopTracks(); }, [stopTracks]);
+  useEffect(() => () => { clearInterval(timerRef.current); clearTimeout(silenceRef.current); clearTimeout(noSpeechRef.current); recognitionRef.current?.stop(); synthRef.current.cancel(); stopTracks(); }, [stopTracks]);
 
   const fmt = s => `${Math.floor(s/60).toString().padStart(2,"0")}:${(s%60).toString().padStart(2,"0")}`;
 
@@ -273,12 +330,22 @@ export default function LiveInterview() {
       <div className="transcript-panel" ref={transcriptRef}>
         {transcript.length === 0
           ? <div className="transcript-empty">Live transcript will appear here once the interview starts</div>
-          : transcript.map((line, i) => (
-            <div key={i} className={`transcript-line ${line.speaker === "AI" ? "ai" : "user"}`}>
-              <span className="spk">{line.speaker === "AI" ? "Sara" : "You"}:</span>
-              <span className="txt" dangerouslySetInnerHTML={{ __html: escapeHtml(line.text) }} />
-            </div>
-          ))}
+          : transcript.map((line, i) => {
+            const isLatestQuestion = line.speaker === "AI" && i === transcript.map(l => l.speaker).lastIndexOf("AI");
+            const redoable = isLatestQuestion && sessionStarted && !sessionEnded;
+            return (
+              <div
+                key={i}
+                className={`transcript-line ${line.speaker === "AI" ? "ai" : "user"}${redoable ? " clickable" : ""}`}
+                onClick={redoable ? redoLatestQuestion : undefined}
+                title={redoable ? "Not happy with your answer? Click to answer this question again." : undefined}
+              >
+                <span className="spk">{line.speaker === "AI" ? "Sara" : "You"}:</span>
+                <span className="txt" dangerouslySetInnerHTML={{ __html: escapeHtml(line.text) }} />
+                {redoable && <span className="redo-hint">↺ answer again</span>}
+              </div>
+            );
+          })}
       </div>
 
       {/* Controls */}
@@ -286,7 +353,7 @@ export default function LiveInterview() {
         <button className="btn btn-start" onClick={startInterview} disabled={sessionStarted}>▶ Start</button>
         <button className="btn btn-end" onClick={endSession} disabled={!sessionStarted || sessionEnded}>■ End</button>
         <button className={`btn btn-speak${isMicActive ? " recording" : ""}`} onClick={startListening} disabled={!sessionStarted || sessionEnded}>
-          {isMicActive ? "🔴 Listening…" : "🎤 Speak Answer"}
+          {isMicActive ? "🔴 Listening…" : "🎤 Speak Again"}
         </button>
       </div>
 

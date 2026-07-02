@@ -7,6 +7,9 @@ import {
   fetchCandidatesRequest,
   fetchCandidatesSuccess,
   fetchCandidatesFailure,
+  createCandidateRequest,
+  createCandidateSuccess,
+  createCandidateFailure,
   fetchInterviewsRequest,
   fetchInterviewsSuccess,
   fetchInterviewsFailure,
@@ -33,6 +36,15 @@ function* fetchCandidatesWorker(action) {
     yield put(fetchCandidatesSuccess(data));
   } catch {
     yield put(fetchCandidatesFailure());
+  }
+}
+
+function* createCandidateWorker(action) {
+  try {
+    const { data } = yield call(apiClient.post, "/admin/candidates", action.payload);
+    yield put(createCandidateSuccess(data));
+  } catch (err) {
+    yield put(createCandidateFailure(err.response?.data?.message || "Failed to create candidate."));
   }
 }
 
@@ -68,6 +80,7 @@ function* cancelInterviewWorker(action) {
 export default function* adminSaga() {
   yield takeLatest(fetchStatsRequest.type, fetchStatsWorker);
   yield takeLatest(fetchCandidatesRequest.type, fetchCandidatesWorker);
+  yield takeLatest(createCandidateRequest.type, createCandidateWorker);
   yield takeLatest(fetchInterviewsRequest.type, fetchInterviewsWorker);
   yield takeLatest(scheduleInterviewRequest.type, scheduleInterviewWorker);
   yield takeLatest(cancelInterviewRequest.type, cancelInterviewWorker);

@@ -10,6 +10,9 @@ const adminSlice = createSlice({
     candidates: [],
     candidatesStatus: "idle",
 
+    createCandidateStatus: "idle", // idle | loading | succeeded | failed
+    createCandidateError: null,
+
     interviews: [],
     interviewsStatus: "idle",
 
@@ -41,6 +44,23 @@ const adminSlice = createSlice({
     },
     fetchCandidatesFailure: (state) => {
       state.candidatesStatus = "failed";
+    },
+
+    createCandidateRequest: (state) => {
+      state.createCandidateStatus = "loading";
+      state.createCandidateError = null;
+    },
+    createCandidateSuccess: (state, action) => {
+      state.createCandidateStatus = "succeeded";
+      state.candidates = [action.payload.candidate, ...state.candidates];
+    },
+    createCandidateFailure: (state, action) => {
+      state.createCandidateStatus = "failed";
+      state.createCandidateError = action.payload;
+    },
+    resetCreateCandidateStatus: (state) => {
+      state.createCandidateStatus = "idle";
+      state.createCandidateError = null;
     },
 
     fetchInterviewsRequest: (state) => {
@@ -91,6 +111,10 @@ export const {
   fetchCandidatesRequest,
   fetchCandidatesSuccess,
   fetchCandidatesFailure,
+  createCandidateRequest,
+  createCandidateSuccess,
+  createCandidateFailure,
+  resetCreateCandidateStatus,
   fetchInterviewsRequest,
   fetchInterviewsSuccess,
   fetchInterviewsFailure,
