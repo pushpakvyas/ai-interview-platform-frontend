@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { PASSWORD_REQUIREMENTS } from "../../utils/validation.js";
 
-export default function PasswordField({ label = "Password", value, onChange, placeholder = "••••••••", autoComplete = "new-password" }) {
+export default function PasswordField({ label = "Password", value, onChange, placeholder = "••••••••", autoComplete = "new-password", required = true }) {
   const [touched, setTouched] = useState(false);
 
   return (
     <div className="input-group">
-      <label>{label}</label>
+      <label>{label}{!required && <span className="muted"> (optional — leave blank to auto-generate)</span>}</label>
       <input
         type="password"
         placeholder={placeholder}
@@ -14,7 +14,7 @@ export default function PasswordField({ label = "Password", value, onChange, pla
         autoComplete={autoComplete}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setTouched(true)}
-        required
+        required={required}
       />
       {touched && value.length > 0 && (
         <ul className="password-requirements">

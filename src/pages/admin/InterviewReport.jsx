@@ -42,6 +42,7 @@ export default function InterviewReport() {
   if (!report) return <PageLoader label="Loading report…" />;
   const { interview, transcript } = report;
   const score = interview.score;
+  const questionsAnswered = transcript.filter(t => (t.finalAnswerText || "").trim().length > 0).length;
 
   return (
     <div>
@@ -67,6 +68,7 @@ export default function InterviewReport() {
             ["Time", interview.scheduledTime],
             ["Status", interview.status],
             ["Duration", interview.duration ? `${interview.duration} min` : "—"],
+            ["Questions Answered", transcript.length ? `${questionsAnswered} / ${transcript.length}` : "—"],
           ].map(([lbl, val]) => (
             <div className="info-row" key={lbl}><span className="lbl">{lbl}</span><span className="val">{val||"—"}</span></div>
           ))}

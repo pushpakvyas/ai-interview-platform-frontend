@@ -27,6 +27,7 @@ export default function TimePicker({ value, onChange, placeholder = "Select time
     const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("mousedown", onDocClick);
     document.addEventListener("keydown", onKey);
+    // Scroll the current selection into view when the panel opens.
     requestAnimationFrame(() => activeRef.current?.scrollIntoView({ block: "center" }));
     return () => { document.removeEventListener("mousedown", onDocClick); document.removeEventListener("keydown", onKey); };
   }, [open]);

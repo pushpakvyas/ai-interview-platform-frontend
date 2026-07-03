@@ -4,12 +4,15 @@ import { Link } from "react-router-dom";
 import { fetchStatsRequest } from "../../store/slices/adminSlice.js";
 import Spinner from "../../components/common/Spinner.jsx";
 import TableLoadingRow from "../../components/common/TableLoadingRow.jsx";
+import { statusLabel, statusBadgeClass } from "../../utils/status.js";
 
 const NAV = [
   { to:"/admin/candidates", icon:"👥", label:"Candidates", desc:"View and manage all registered candidates" },
   { to:"/admin/interviews", icon:"📋", label:"Interviews", desc:"Browse, filter, and manage scheduled interviews" },
   { to:"/admin/schedule",   icon:"📅", label:"Schedule Interview", desc:"Set up a new technical interview for a candidate" },
-  { to:"/admin/templates",  icon:"⚙️", label:"Tech Templates", desc:"Manage AI interviewer prompts per technology" },
+  { to:"/admin/templates",  icon:"⚙️", label:"Tech Templates", desc:"Manage AI interviewer prompts for single-technology interviews" },
+  { to:"/admin/skills",     icon:"🏷️", label:"Skills", desc:"Manage the atomic skills candidates list and job roles are built from" },
+  { to:"/admin/job-roles",  icon:"🧩", label:"Job Roles", desc:"Combine skills into a job role for blended interviews" },
 ];
 
 export default function AdminDashboard() {
@@ -28,14 +31,15 @@ export default function AdminDashboard() {
           ["👤","Total Candidates", stats.totalCandidates],
           ["🗓️","Scheduled", stats.scheduledInterviews],
           ["✅","Completed", stats.completedInterviews],
-          ["⚠️","Overdue", stats.pendingInterviews],
+          ["⚠️","Awaiting", stats.pendingInterviews],
+          ["🚫","Missed", stats.missedInterviews],
         ].map(([icon, label, val]) => (
           <div className="stat-card" key={label}>
             <div className="stat-icon">{icon}</div>
             <div className="stat-label">{label}</div>
             <div className="stat-value">{val}</div>
           </div>
-        )) : [1,2,3,4].map(i => <div className="stat-card" key={i}><div className="stat-label">Loading…</div><div className="stat-value"><Spinner size={18} /></div></div>)}
+        )) : [1,2,3,4,5].map(i => <div className="stat-card" key={i}><div className="stat-label">Loading…</div><div className="stat-value"><Spinner size={18} /></div></div>)}
       </div>
 
       <div className="section-header"><span className="section-title">Quick Actions</span></div>
@@ -68,7 +72,7 @@ export default function AdminDashboard() {
                   <td>{iv.technology}</td>
                   <td>{new Date(iv.scheduledDate).toDateString()}</td>
                   <td>{iv.scheduledTime}</td>
-                  <td><span className={`badge badge-${iv.status.toLowerCase()}`}>{iv.status}</span></td>
+                  <td><span className={`badge ${statusBadgeClass(iv.status)}`}>{statusLabel(iv.status)}</span></td>
                   <td>{iv.score ? <span className="score-pill">{iv.score.overallScore}/100</span> : "—"}</td>
                 </tr>
               ))}

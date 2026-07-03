@@ -1,24 +1,48 @@
 import { useEffect, useRef } from "react";
 
-// Officially hosted model weights for face-api.js (maintained by the library
-// author specifically for this purpose). Loaded once per browser session and
-// cached by face-api.js itself.
-const MODEL_URL = "https://justadudewhohacks.github.io/face-api.js/models";
-
-// face-api.js (and the TensorFlow.js core it bundles) is a large dependency
-// that only this hook needs, so it's dynamically imported rather than
-// pulled into the main bundle — every other page (login, dashboards, admin)
-// would otherwise pay for it on load.
+// face-api.js (and the TensorFlow.js core it bundles), plus the embedded
+// model weight data, are only needed by this hook — both are dynamically
+// imported so they become their own lazy-loaded chunks instead of bloating
+// the main app bundle that every page (login, dashboards, etc.) downloads.
+// They're fetched once, only when a live interview actually starts.
 let faceapiPromise = null;
 function getFaceapi() {
   if (!faceapiPromise) faceapiPromise = import("face-api.js");
   return faceapiPromise;
 }
 
+let weightsDataPromise = null;
+function getWeightsData() {
+  if (!weightsDataPromise) weightsDataPromise = import("./faceDetectionModelWeights.js");
+  return weightsDataPromise;
+}
+
+function base64ToArrayBuffer(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+// Loads the TinyFaceDetector purely from the embedded bytes in
+// faceDetectionModelWeights.js, using face-api.js/TensorFlow.js's own
+// weight-loading functions (tf.io.weightsLoaderFactory + loadFromWeightMap)
+// with an in-memory "fetch" that just returns the already-embedded
+// ArrayBuffer instead of making an HTTP request or reading from disk. This
+// is the same mechanism face-api.js's own loadFromDisk() uses internally
+// (reading bytes from disk instead of the network) — here the bytes come
+// from memory instead of disk or network.
 let modelsPromise = null;
 function loadModels(faceapi) {
   if (!modelsPromise) {
-    modelsPromise = faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    modelsPromise = getWeightsData().then(({ TINY_FACE_DETECTOR_MANIFEST, TINY_FACE_DETECTOR_WEIGHTS_B64 }) => {
+      const weightsArrayBuffer = base64ToArrayBuffer(TINY_FACE_DETECTOR_WEIGHTS_B64);
+      const fetchWeightsFromMemory = async (filePaths) => filePaths.map(() => weightsArrayBuffer);
+      const loadWeights = faceapi.tf.io.weightsLoaderFactory(fetchWeightsFromMemory);
+      return loadWeights(TINY_FACE_DETECTOR_MANIFEST, "").then((weightMap) => {
+        faceapi.nets.tinyFaceDetector.loadFromWeightMap(weightMap);
+      });
+    });
   }
   return modelsPromise;
 }

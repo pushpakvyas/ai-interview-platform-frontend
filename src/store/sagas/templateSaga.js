@@ -10,6 +10,9 @@ import {
   deleteTemplateRequest,
   deleteTemplateSuccess,
   deleteTemplateFailure,
+  updateTemplateRequest,
+  updateTemplateSuccess,
+  updateTemplateFailure,
 } from "../slices/templateSlice.js";
 
 function* fetchTemplatesWorker() {
@@ -40,8 +43,19 @@ function* deleteTemplateWorker(action) {
   }
 }
 
+function* updateTemplateWorker(action) {
+  const { id, ...updates } = action.payload;
+  try {
+    const { data } = yield call(apiClient.put, `/templates/${id}`, updates);
+    yield put(updateTemplateSuccess(data));
+  } catch (err) {
+    yield put(updateTemplateFailure(err.response?.data?.message || "Failed to update template."));
+  }
+}
+
 export default function* templateSaga() {
   yield takeLatest(fetchTemplatesRequest.type, fetchTemplatesWorker);
   yield takeLatest(createTemplateRequest.type, createTemplateWorker);
   yield takeLatest(deleteTemplateRequest.type, deleteTemplateWorker);
+  yield takeLatest(updateTemplateRequest.type, updateTemplateWorker);
 }

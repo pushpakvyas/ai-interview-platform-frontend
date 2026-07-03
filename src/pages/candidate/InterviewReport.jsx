@@ -34,8 +34,10 @@ export default function InterviewReport() {
   if (error) return <p className="error-banner">{error}</p>;
   if (!report) return <PageLoader label="Loading report…" />;
 
-  const { interview } = report;
+  const { interview, transcript = [] } = report;
   const score = interview.score;
+  const questionsAnswered = transcript.filter(t => (t.finalAnswerText || "").trim().length > 0).length;
+  const questionsAsked = transcript.length;
 
   return (
     <div>
@@ -58,6 +60,7 @@ export default function InterviewReport() {
             ["Date", new Date(interview.scheduledDate).toDateString()],
             ["Status", interview.status],
             ["Duration", interview.duration ? `${interview.duration} min` : "—"],
+            ["Questions Answered", questionsAsked ? `${questionsAnswered} / ${questionsAsked}` : "—"],
           ].map(([lbl, val]) => (
             <div className="info-row" key={lbl}><span className="lbl">{lbl}</span><span className="val">{val||"—"}</span></div>
           ))}
@@ -108,6 +111,18 @@ export default function InterviewReport() {
             <div className="feedback-label">Areas of Improvement</div>
             <div className="feedback-box">{score.improvementSuggestions.map((s,i) => <div key={i}>💡 {s}</div>)}</div>
           </>}
+        </div>
+      )}
+
+      {transcript.length > 0 && (
+        <div className="report-section">
+          <h3>Questions & Answers ({questionsAnswered} of {questionsAsked} answered)</h3>
+          {transcript.map((entry, i) => (
+            <div className="transcript-entry" key={entry._id || i}>
+              <div className="q">Q{i + 1}. {entry.questionText}</div>
+              <div className="a">{entry.finalAnswerText || <em style={{ color: "var(--text-3)" }}>Not answered</em>}</div>
+            </div>
+          ))}
         </div>
       )}
     </div>

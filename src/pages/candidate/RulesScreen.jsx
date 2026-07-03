@@ -19,7 +19,7 @@ export default function RulesScreen() {
             ["👤","Sit alone","No other people should be visible in the frame."],
             ["🚫","No tab switching","Switching tabs or minimizing the window counts as a violation."],
             ["📋","No copy-paste","Copy and paste are disabled during the interview."],
-            ["🛠️","DevTools closed","Opening browser developer tools will trigger a warning."],
+            ["🖥️","Share this tab with audio","When prompted at the start, share this tab and leave \"Share tab audio\" checked — this is what lets the recording capture the AI interviewer's questions, not just your answers."],
           ].map(([icon, title, desc]) => (
             <div className="flow-step" key={title}>
               <span className="flow-step-icon">{icon}</span>
@@ -28,7 +28,7 @@ export default function RulesScreen() {
           ))}
         </div>
         <div className="warning-rules">
-          <strong>⚠️ Warning system:</strong> You have a maximum of <strong>3 warnings</strong>. Violations include: face not detected, multiple faces, looking away, leaving your seat, switching tabs, or opening DevTools. After 3 warnings, <strong>your interview ends automatically</strong>.
+          <strong>⚠️ Warning system:</strong> You have a maximum of <strong>3 warnings</strong>. Violations include: face not detected, multiple faces, looking away, leaving your seat, or switching tabs. After 3 warnings, <strong>your interview ends automatically</strong>.
         </div>
         <div className="flow-actions">
           <BackButton to={`/candidate/interview/${id}/welcome`} />

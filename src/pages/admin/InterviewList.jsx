@@ -4,8 +4,9 @@ import { Link } from "react-router-dom";
 import { fetchInterviewsRequest, cancelInterviewRequest, fetchCandidatesRequest } from "../../store/slices/adminSlice.js";
 import BackButton from "../../components/common/BackButton.jsx";
 import TableLoadingRow from "../../components/common/TableLoadingRow.jsx";
+import { statusLabel, statusBadgeClass } from "../../utils/status.js";
 
-const STATUS_OPTIONS = ["","SCHEDULED","RESCHEDULED","IN_PROGRESS","COMPLETED","CANCELLED"];
+const STATUS_OPTIONS = ["","SCHEDULED","RESCHEDULED","IN_PROGRESS","COMPLETED","CANCELLED","EXPIRED"];
 
 export default function InterviewList() {
   const dispatch = useDispatch();
@@ -34,7 +35,7 @@ export default function InterviewList() {
       <p className="page-subtitle">View and manage all interviews</p>
       <div className="search-row">
         <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}>
-          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s||"All Statuses"}</option>)}
+          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s?statusLabel(s):"All Statuses"}</option>)}
         </select>
         <select value={candidateFilter} onChange={e=>setCandidateFilter(e.target.value)}>
           <option value="">All Candidates</option>
@@ -55,7 +56,7 @@ export default function InterviewList() {
                   <td>{new Date(iv.scheduledDate).toDateString()}</td>
                   <td>{iv.scheduledTime}</td>
                   <td>
-                    <span className={`badge badge-${iv.status.toLowerCase()}`}>{iv.status}</span>
+                    <span className={`badge ${statusBadgeClass(iv.status)}`}>{statusLabel(iv.status)}</span>
                     {iv.terminatedForViolation && <span className="badge badge-cancelled" style={{marginLeft:4}}>Violation</span>}
                   </td>
                   <td>{iv.score ? <span className="score-pill">{iv.score.overallScore}/100</span> : "—"}</td>

@@ -3,10 +3,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { fetchCandidateDashboardRequest } from "../../store/slices/interviewSlice.js";
 import SectionLoader from "../../components/common/SectionLoader.jsx";
+import { statusLabel, statusBadgeClass } from "../../utils/status.js";
 
 function statusBadge(status) {
-  const map = { SCHEDULED:"badge-scheduled", RESCHEDULED:"badge-rescheduled", COMPLETED:"badge-completed", CANCELLED:"badge-cancelled" };
-  return <span className={`badge ${map[status]||"badge-scheduled"}`}>{status}</span>;
+  return <span className={`badge ${statusBadgeClass(status)}`}>{statusLabel(status)}</span>;
 }
 
 function recBadge(rec) {
@@ -18,7 +18,7 @@ function recBadge(rec) {
 export default function CandidateDashboard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { upcoming, completed, todaysInterview, status } = useSelector(s => s.interview);
+  const { upcoming, completed, missed, todaysInterview, status } = useSelector(s => s.interview);
   const user = useSelector(s => s.auth.user);
 
   useEffect(() => { dispatch(fetchCandidateDashboardRequest()); }, [dispatch]);
@@ -69,6 +69,30 @@ export default function CandidateDashboard() {
           </div>
         )}
       </div>
+
+      {missed.length > 0 && (
+        <div className="section-gap">
+          <div className="section-header">
+            <span className="section-title">Missed Interviews</span>
+            <span className="muted">{missed.length} missed</span>
+          </div>
+          <div className="card-grid">
+            {missed.map(iv => (
+              <div className="card" key={iv._id}>
+                <p className="card-tech">{iv.technology}</p>
+                <div className="card-meta">
+                  <span>📅 {new Date(iv.scheduledDate).toDateString()}</span>
+                  <span>🕐 {iv.scheduledTime}</span>
+                </div>
+                <div className="card-footer">
+                  {statusBadge(iv.status)}
+                  <span className="muted">Contact the admin to reschedule</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="section-gap">
         <div className="section-header">

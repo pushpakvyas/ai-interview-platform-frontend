@@ -21,6 +21,8 @@ import CandidateList from "./pages/admin/CandidateList.jsx";
 import InterviewList from "./pages/admin/InterviewList.jsx";
 import ScheduleInterview from "./pages/admin/ScheduleInterview.jsx";
 import TechnologyTemplates from "./pages/admin/TechnologyTemplates.jsx";
+import JobRoles from "./pages/admin/JobRoles.jsx";
+import Skills from "./pages/admin/Skills.jsx";
 import InterviewReport from "./pages/admin/InterviewReport.jsx";
 
 const PUBLIC_PATHS = ["/login"];
@@ -72,6 +74,8 @@ export default function App() {
           <Route path="/admin/interviews" element={<ProtectedRoute allowedRoles={["ADMIN"]}><InterviewList /></ProtectedRoute>} />
           <Route path="/admin/schedule" element={<ProtectedRoute allowedRoles={["ADMIN"]}><ScheduleInterview /></ProtectedRoute>} />
           <Route path="/admin/templates" element={<ProtectedRoute allowedRoles={["ADMIN"]}><TechnologyTemplates /></ProtectedRoute>} />
+          <Route path="/admin/job-roles" element={<ProtectedRoute allowedRoles={["ADMIN"]}><JobRoles /></ProtectedRoute>} />
+          <Route path="/admin/skills" element={<ProtectedRoute allowedRoles={["ADMIN"]}><Skills /></ProtectedRoute>} />
           <Route path="/admin/reports/:id" element={<ProtectedRoute allowedRoles={["ADMIN"]}><InterviewReport /></ProtectedRoute>} />
 
           <Route

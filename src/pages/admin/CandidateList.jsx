@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCandidatesRequest, createCandidateRequest, resetCreateCandidateStatus } from "../../store/slices/adminSlice.js";
+import { fetchSkillsRequest } from "../../store/slices/skillSlice.js";
 import BackButton from "../../components/common/BackButton.jsx";
 import TableLoadingRow from "../../components/common/TableLoadingRow.jsx";
 import PasswordField from "../../components/common/PasswordField.jsx";
 import Spinner from "../../components/common/Spinner.jsx";
 import { sha256Hex } from "../../utils/hash.js";
 import { isPasswordValid, passwordErrorMessage } from "../../utils/validation.js";
-import { TECH_OPTIONS } from "../../constants/technologies.js";
 
 const EMPTY_FORM = { firstName: "", lastName: "", email: "", mobile: "", password: "", experience: 0, technology: [] };
 
 export default function CandidateList() {
   const dispatch = useDispatch();
   const { candidates, candidatesStatus, createCandidateStatus, createCandidateError } = useSelector((s) => s.admin);
+  const { items: skills } = useSelector((s) => s.skill);
   const [search, setSearch] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -21,6 +22,7 @@ export default function CandidateList() {
   const [formError, setFormError] = useState(null);
 
   useEffect(() => { dispatch(fetchCandidatesRequest({ search: search || undefined })); }, [dispatch]);
+  useEffect(() => { dispatch(fetchSkillsRequest()); }, [dispatch]);
 
   useEffect(() => {
     if (createCandidateStatus === "succeeded" && modalOpen) {
@@ -51,12 +53,12 @@ export default function CandidateList() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isPasswordValid(form.password)) {
+    if (form.password && !isPasswordValid(form.password)) {
       setFormError(passwordErrorMessage());
       return;
     }
     setFormError(null);
-    const hashedPassword = await sha256Hex(form.password);
+    const hashedPassword = form.password ? await sha256Hex(form.password) : "";
     dispatch(createCandidateRequest({ ...form, password: hashedPassword }));
   };
 
@@ -99,7 +101,7 @@ export default function CandidateList() {
         <div className="modal-overlay" onClick={handleCancel}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
             <h3>Add New Candidate</h3>
-            <p className="muted" style={{ marginBottom: "1rem" }}>Create a candidate account directly. They can sign in immediately with the password you set.</p>
+            <p className="muted" style={{ marginBottom: "1rem" }}>Create a candidate account directly. Leave the password blank to auto-generate one and email it to the candidate.</p>
             {(formError || (createCandidateStatus === "failed" && createCandidateError)) && (
               <div className="error-banner" style={{ marginBottom: "1rem" }}>{formError || createCandidateError}</div>
             )}
@@ -113,14 +115,14 @@ export default function CandidateList() {
                 <div className="form-group"><label>Mobile</label><input value={form.mobile} onChange={e=>set("mobile",e.target.value)} required /></div>
                 <div className="form-group"><label>Experience (yrs)</label><input type="number" min="0" value={form.experience} onChange={e=>set("experience",Number(e.target.value))} /></div>
               </div>
-              <PasswordField value={form.password} onChange={(v)=>set("password",v)} />
+              <PasswordField value={form.password} onChange={(v)=>set("password",v)} required={false} />
               <div className="form-group">
                 <label>Technologies</label>
                 <div className="tech-select">
-                  {TECH_OPTIONS.map(t => (
-                    <label key={t} className={`tech-chip${form.technology.includes(t)?" selected":""}`}>
-                      <input type="checkbox" checked={form.technology.includes(t)} onChange={()=>toggleTech(t)} />
-                      {t}
+                  {skills.map(s => (
+                    <label key={s._id} className={`tech-chip${form.technology.includes(s.name)?" selected":""}`}>
+                      <input type="checkbox" checked={form.technology.includes(s.name)} onChange={()=>toggleTech(s.name)} />
+                      {s.name}
                     </label>
                   ))}
                 </div>

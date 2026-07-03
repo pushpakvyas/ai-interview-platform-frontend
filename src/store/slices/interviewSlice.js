@@ -5,6 +5,7 @@ const interviewSlice = createSlice({
   initialState: {
     upcoming: [],
     completed: [],
+    missed: [],
     todaysInterview: null,
     activeInterview: null,
     status: "idle",
@@ -21,6 +22,7 @@ const interviewSlice = createSlice({
       state.status = "succeeded";
       state.upcoming = action.payload.upcoming;
       state.completed = action.payload.completed;
+      state.missed = action.payload.missed;
       state.todaysInterview = action.payload.todaysInterview;
     },
     fetchCandidateDashboardFailure: (state, action) => {

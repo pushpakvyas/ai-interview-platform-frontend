@@ -4,10 +4,15 @@ import { useEffect } from "react";
  * Hook that wires up anti-cheating detection: tab switching, window
  * blur/minimize, copy/paste, and right-click.
  * Calls onViolation(type, details) whenever a violation is detected.
+ *
+ * Note: the old "devtools open" heuristic (comparing window.outerWidth vs
+ * innerWidth) was removed — it produced false positives any time the
+ * browser window was resized, maximized/restored, or on certain OS/zoom
+ * combinations, none of which mean the candidate is actually cheating.
+ * Dual-face detection (see useFaceDetection.js) covers a more reliable and
+ * directly meaningful signal instead.
  */
 export default function useAntiCheat({ active, onViolation }) {
-  //const devToolsCheckRef = useRef(null);
-
   useEffect(() => {
     if (!active) return;
 
@@ -28,16 +33,6 @@ export default function useAntiCheat({ active, onViolation }) {
       e.preventDefault();
     };
 
-    // // Crude devtools-open heuristic via window size delta
-    // const threshold = 160;
-    // devToolsCheckRef.current = setInterval(() => {
-    //   const widthDelta = window.outerWidth - window.innerWidth;
-    //   const heightDelta = window.outerHeight - window.innerHeight;
-    //   if (widthDelta > threshold || heightDelta > threshold) {
-    //     onViolation("DEV_TOOLS", "Developer tools may be open");
-    //   }
-    // }, 3000);
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleBlur);
     document.addEventListener("copy", handleCopyPaste);
@@ -50,7 +45,6 @@ export default function useAntiCheat({ active, onViolation }) {
       document.removeEventListener("copy", handleCopyPaste);
       document.removeEventListener("paste", handleCopyPaste);
       document.removeEventListener("contextmenu", handleContextMenu);
-      // clearInterval(devToolsCheckRef.current);
     };
   }, [active, onViolation]);
 }

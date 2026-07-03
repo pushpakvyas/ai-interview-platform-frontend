@@ -29,7 +29,7 @@ export default function Login() {
       <form className="auth-form" onSubmit={handleSubmit}>
         <div>
           <h2>Welcome back</h2>
-          <p className="auth-subtitle">Sign in to your interview account</p>
+          <p className="auth-subtitle">Sign in to your account</p>
         </div>
         {error && <div className="error-banner">{error}</div>}
         <div className="input-group">
