@@ -712,16 +712,21 @@ option { background: var(--surface); }
   line-height: 1.7;
 }
 .transcript-empty { color: var(--text-3); text-align: center; margin-top: 3rem; font-family: var(--font-body); font-size: 0.875rem; }
-.transcript-line { margin-bottom: 0.5rem; display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
-.transcript-line .spk { font-weight: 500; flex-shrink: 0; }
-.transcript-line.ai .spk { color: var(--indigo); }
-.transcript-line.user .spk { color: var(--teal); }
-.transcript-line .txt { color: var(--text-2); }
-.transcript-line.clickable { cursor: pointer; border-radius: var(--radius-sm); padding: 0.2rem 0.4rem; margin: -0.2rem -0.4rem 0.3rem; transition: background 0.15s; }
-.transcript-line.clickable:hover { background: var(--indigo-dim); }
-.transcript-line.clickable:hover .txt { color: var(--text); }
-.redo-hint { font-family: var(--font-body); font-size: 0.68rem; color: var(--indigo); opacity: 0; transition: opacity 0.15s; margin-left: auto; white-space: nowrap; }
-.transcript-line.clickable:hover .redo-hint { opacity: 1; }
+.transcript-row { display: flex; margin-bottom: 0.85rem; }
+.row-ai { justify-content: flex-start; }
+.row-user { justify-content: flex-end; }
+.transcript-bubble { max-width: 76%; padding: 0.6rem 0.9rem; border-radius: var(--radius); font-size: 0.82rem; line-height: 1.65; display: flex; flex-direction: column; gap: 0.2rem; }
+.transcript-bubble.ai { background: var(--indigo-dim); border: 1px solid rgba(230,164,60,0.28); border-top-left-radius: 4px; }
+.transcript-bubble.user { background: var(--teal-dim); border: 1px solid rgba(52,208,196,0.28); border-top-right-radius: 4px; }
+.bubble-spk { font-family: var(--font-body); font-weight: 700; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.transcript-bubble.ai .bubble-spk { color: var(--indigo); }
+.transcript-bubble.user .bubble-spk { color: var(--teal); }
+.bubble-txt { color: var(--text); }
+.transcript-bubble.clickable { cursor: pointer; transition: filter 0.15s, transform 0.1s; }
+.transcript-bubble.clickable:hover { filter: brightness(1.15); }
+.transcript-bubble.clickable:active { transform: scale(0.99); }
+.redo-hint { font-family: var(--font-body); font-size: 0.66rem; color: var(--indigo); opacity: 0; transition: opacity 0.15s; align-self: flex-start; }
+.transcript-bubble.clickable:hover .redo-hint { opacity: 1; }
 
 /* Controls */
 .interview-controls {
