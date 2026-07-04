@@ -33,6 +33,19 @@ const templateSlice = createSlice({
       state.mutationStatus = "failed";
       state.mutationError = action.payload;
     },
+    updateTemplateRequest: (state) => {
+      state.mutationStatus = "loading";
+      state.mutationError = null;
+    },
+    updateTemplateSuccess: (state, action) => {
+      state.mutationStatus = "succeeded";
+      const idx = state.items.findIndex((t) => t._id === action.payload.template._id);
+      if (idx !== -1) state.items[idx] = action.payload.template;
+    },
+    updateTemplateFailure: (state, action) => {
+      state.mutationStatus = "failed";
+      state.mutationError = action.payload;
+    },
     deleteTemplateRequest: (state) => {
       state.mutationStatus = "loading";
       state.mutationError = null;
@@ -45,17 +58,9 @@ const templateSlice = createSlice({
       state.mutationStatus = "failed";
       state.mutationError = action.payload;
     },
-    updateTemplateRequest: (state) => {
-      state.mutationStatus = "loading";
+    resetTemplateMutationStatus: (state) => {
+      state.mutationStatus = "idle";
       state.mutationError = null;
-    },
-    updateTemplateSuccess: (state, action) => {
-      state.mutationStatus = "succeeded";
-      state.items = state.items.map((t) => (t._id === action.payload.template._id ? action.payload.template : t));
-    },
-    updateTemplateFailure: (state, action) => {
-      state.mutationStatus = "failed";
-      state.mutationError = action.payload;
     },
   },
 });
@@ -67,11 +72,12 @@ export const {
   createTemplateRequest,
   createTemplateSuccess,
   createTemplateFailure,
-  deleteTemplateRequest,
-  deleteTemplateSuccess,
-  deleteTemplateFailure,
   updateTemplateRequest,
   updateTemplateSuccess,
   updateTemplateFailure,
+  deleteTemplateRequest,
+  deleteTemplateSuccess,
+  deleteTemplateFailure,
+  resetTemplateMutationStatus,
 } = templateSlice.actions;
 export default templateSlice.reducer;

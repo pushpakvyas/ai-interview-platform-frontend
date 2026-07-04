@@ -352,6 +352,33 @@ option { background: var(--surface); }
   font-size: 0.9rem;
   width: 100%;
 }
+.password-input-wrap { position: relative; display: flex; }
+.password-input-wrap input { padding-right: 2.75rem; }
+.password-toggle-btn {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  cursor: pointer;
+  color: var(--text-3);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.password-toggle-btn svg { display: block; }
+.password-toggle-btn:hover { color: var(--text-2); background: var(--indigo-dim); }
+.password-toggle-btn:focus-visible {
+  outline: none;
+  color: var(--indigo);
+  box-shadow: 0 0 0 3px var(--indigo-dim);
+}
+.password-toggle-btn:active { transform: translateY(-50%) scale(0.94); }
 .auth-form .input-group { gap: 0.3rem; }
 .auth-form .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 
@@ -631,6 +658,24 @@ option { background: var(--surface); }
 @keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .modal-panel h3 { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem; }
+.qbank-editor { display: flex; flex-direction: column; gap: 0.5rem; }
+.qbank-row {
+  display: grid;
+  grid-template-columns: 1fr 0.6fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+.qbank-row input, .qbank-row select {
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  width: 100%;
+}
+.qbank-remove { color: var(--red); padding: 0.4rem 0.6rem; }
+.qbank-remove:hover { background: var(--red-dim); border-color: transparent; }
+@media (max-width: 640px) {
+  .qbank-row { grid-template-columns: 1fr; }
+}
 
 /* ═══════════════════════════════════════
    INTERVIEW FLOW SCREENS (welcome/rules/ack)
